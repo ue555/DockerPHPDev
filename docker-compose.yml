@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  mysql:
+    platform: linux/x86_64
+    image: mysql:5.7
+    container_name: mysql5.7
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./mysql/data:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/based.sql:/docker-entrypoint-initdb.d/based.sql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: myapp
+      MYSQL_ROOT_PASSWORD: 12345678
+    networks:
+      - my-network
+
+  php_fpm:
+    build:
+      context: ./
+      dockerfile: ./php/Dockerfile
+    working_dir: /var/www/html/
+    container_name: PHP7.4
+    volumes:
+      - type: bind
+        source: ./var/www/html/
+        target: /var/www/html/
+    depends_on:
+      - mysql
+    networks:
+      - my-network
+
+  nginx:
+    platform: linux/x86_64
+    image: nginx:latest
+    container_name: nginx
+    networks:
+      - my-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - type: bind
+        source: ./nginx/nginx.conf
+        target: /etc/nginx/conf.d/default.conf
+      - type: bind
+        source: ./var/www/html/
+        target: /var/www/html/
+    depends_on:
+      - php_fpm
+      - mysql
+    ports:
+      - "80:80"
+
+networks:
+  my-network:
+    driver: bridge
