@@ -32,7 +32,3 @@ Copy your sql file to *docker/mysql* with *based.sql* as a file name.
     ```bash
     docker rm nginx mysql5.7 PHP7.4
     ```
-4. Reset mysql data
-    ```bash
-    bash reset-db.sh
-    ```
